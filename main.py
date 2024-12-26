@@ -202,11 +202,9 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
 
         screen.blit(blur_image(menu, 10) if score_frame_being_drawn else menu, (0, 0))
 
-
     score_frame_being_drawn = False
     close_score_frame_btn = None
     close_score_frame_pressed = False
-
 
     def draw_score():
         nonlocal close_score_frame_btn
