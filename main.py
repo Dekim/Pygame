@@ -7,6 +7,13 @@ settings = {
     'screen_background': (11, 11, 11)
 }
 
+data = {
+    'level': 0,
+    'km': 0,
+    'fireflies': 0,
+    'stars': 0
+}
+
 
 class Cursor:
     def __init__(self, screen: pygame.Surface):
@@ -142,6 +149,9 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     menu = pygame.Surface((800, 600))
     menu.fill(settings['screen_background'])
 
+    fairy_img = pygame.image.load('resource/image/player.png')
+    fairy_img = pygame.transform.scale(fairy_img, (250, 400))
+
     play_btn_pressed = False
     exit_btn_pressed = False
     score_btn_pressed = False
@@ -155,7 +165,6 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     play_btn.style['states']['pressed']['color'] = (255, 255, 255)
     play_btn.style['states']['pressed']['background'] = (8, 106, 87)
     play_btn.style['states']['pressed']['border-color'] = (8, 106, 87)
-    play_btn.draw()
 
     exit_btn = Button("Выход", (202, 350), menu)
     exit_btn.style['font-size'] = 15
@@ -166,7 +175,6 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     exit_btn.style['states']['pressed']['color'] = (255, 255, 255)
     exit_btn.style['states']['pressed']['background'] = (41, 92, 132)
     exit_btn.style['states']['pressed']['border-color'] = (41, 92, 132)
-    exit_btn.draw()
 
     score_table_btn = Button("Таблица рекордов", (555, 50), menu)
     score_table_btn.style['font-size'] = 12
@@ -176,13 +184,16 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     score_table_btn.style['states']['pressed']['color'] = (230, 230, 230)
     score_table_btn.style['states']['pressed']['background'] = settings['screen_background']
     score_table_btn.style['states']['pressed']['border-color'] = settings['screen_background']
-    score_table_btn.draw()
 
-    screen.blit(menu, (0, 0))
+    level_label = Label(f"Уровень {data['level']}", 12)
+
 
     def draw_menu():
         nonlocal menu
         menu.fill(settings['screen_background'])
+
+        menu.blit(fairy_img, (500, 125))
+        menu.blit(level_label.text, (25, 25))
 
         # Отрисовка элементов
         play_btn.draw(play_btn_pressed)
@@ -191,10 +202,11 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
 
         screen.blit(blur_image(menu, 10) if score_frame_being_drawn else menu, (0, 0))
 
-    score_frame_being_drawn = False
 
+    score_frame_being_drawn = False
     close_score_frame_btn = None
     close_score_frame_pressed = False
+
 
     def draw_score():
         nonlocal close_score_frame_btn
@@ -220,7 +232,7 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
         tx, ty = label.get_size()
         frame.blit(label.text, (300 - tx / 2, 125))
 
-        label = Label("0 km", 24)
+        label = Label(f"{data['km']} km", 24)
         tx, ty = label.get_size()
         frame.blit(label.text, (300 - tx / 2, 150))
 
@@ -228,19 +240,21 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
         tx, ty = label.get_size()
         frame.blit(label.text, (300 - tx / 2, 200))
 
-        label = Label("0", 24)
+        label = Label(str(data['fireflies']), 24)
         tx, ty = label.get_size()
         frame.blit(label.text, (300 - tx / 2, 225))
 
         label = Label("Звезды за побежденных врагов:", 12)
         tx, ty = label.get_size()
         frame.blit(label.text, (300 - tx / 2, 275))
-        label = Label("0", 24)
+        label = Label(str(data['stars']), 24)
         tx, ty = label.get_size()
         frame.blit(label.text, (300 - tx / 2, 300))
 
         screen.blit(frame, (100, 100))
 
+
+    draw_menu()
     running = True
 
     while running:
@@ -302,6 +316,49 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
         pygame.display.flip()
         clock.tick(settings['fps'])
 
+
+def game():
+    running = True
+
+    fairy_img = pygame.image.load('resource/image/player.png')
+    fairy_img = pygame.transform.scale(fairy_img, (100, 150))
+    fairy_img_right = fairy_img
+    fairy_img_left = pygame.transform.flip(fairy_img, True, False)
+    fairy_img = fairy_img_right
+
+
+    fairy_x, fairy_y = 250, 125
+    fairy_speed = 5
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()
+
+
+        if keys[pygame.K_w]:
+            fairy_y -= fairy_speed
+        if keys[pygame.K_s]:
+            fairy_y += fairy_speed
+        if keys[pygame.K_a]:
+            fairy_x -= fairy_speed
+            fairy_img = fairy_img_right
+        if keys[pygame.K_d]:
+            fairy_x += fairy_speed
+            fairy_img = fairy_img_left
+
+
+        # fairy_x = max(0, min(fairy_x, 800 - fairy_img.get_width()))
+        # fairy_y = max(0, min(fairy_y, 600 - fairy_img.get_height()))
+
+        screen.fill(settings['screen_background'])
+        screen.blit(fairy_img, (fairy_x, fairy_y))
+        pygame.display.flip()
+        clock.tick(settings['fps'])
+
+
 if __name__ == '__main__':
     pygame.init()
     pygame.display.set_caption('Светлячки')
@@ -316,6 +373,6 @@ if __name__ == '__main__':
     cursor = Cursor(screen)
 
     start_menu(screen, clock, cursor)
-    print("hello")
+    game()
 
     pygame.quit()
