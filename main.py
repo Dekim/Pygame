@@ -142,6 +142,11 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     menu = pygame.Surface((800, 600))
     menu.fill(settings['screen_background'])
 
+    fairy_img = pygame.image.load(r'D:\dekimpy\Pygame\resource\image\player.png')
+    fairy_img = pygame.transform.scale(fairy_img, (250, 400))
+
+
+
     play_btn_pressed = False
     exit_btn_pressed = False
     score_btn_pressed = False
@@ -184,10 +189,15 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
         nonlocal menu
         menu.fill(settings['screen_background'])
 
+        menu.blit(fairy_img, (500, 125))
+
         # Отрисовка элементов
         play_btn.draw(play_btn_pressed)
         exit_btn.draw(exit_btn_pressed)
         score_table_btn.draw(score_btn_pressed)
+
+
+
 
         screen.blit(blur_image(menu, 10) if score_frame_being_drawn else menu, (0, 0))
 
@@ -299,8 +309,52 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
                     if exit_btn_pressed:
                         terminate()
 
+
         pygame.display.flip()
         clock.tick(settings['fps'])
+
+
+def game():
+    running = True
+
+    fairy_img = pygame.image.load(r'D:\dekimpy\Pygame\resource\image\player.png')
+    fairy_img = pygame.transform.scale(fairy_img, (100, 150))
+    fairy_img_right = fairy_img
+    fairy_img_left = pygame.transform.flip(fairy_img, True, False)
+    fairy_img = fairy_img_right
+
+
+    fairy_x, fairy_y = 250, 125
+    fairy_speed = 5
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()
+
+
+        if keys[pygame.K_w]:
+            fairy_y -= fairy_speed
+        if keys[pygame.K_s]:
+            fairy_y += fairy_speed
+        if keys[pygame.K_a]:
+            fairy_x -= fairy_speed
+            fairy_img = fairy_img_right
+        if keys[pygame.K_d]:
+            fairy_x += fairy_speed
+            fairy_img = fairy_img_left
+
+
+        # fairy_x = max(0, min(fairy_x, 800 - fairy_img.get_width()))
+        # fairy_y = max(0, min(fairy_y, 600 - fairy_img.get_height()))
+
+        screen.fill(settings['screen_background'])
+        screen.blit(fairy_img, (fairy_x, fairy_y))
+        pygame.display.flip()
+        clock.tick(settings['fps'])
+
 
 if __name__ == '__main__':
     pygame.init()
@@ -316,6 +370,6 @@ if __name__ == '__main__':
     cursor = Cursor(screen)
 
     start_menu(screen, clock, cursor)
-    print("hello")
+    game()
 
     pygame.quit()
