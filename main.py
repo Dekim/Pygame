@@ -344,7 +344,14 @@ def load_level(filename):
     max_width = max(map(len, level_map))
 
     # дополняем каждую строку пустыми клетками ('.')
-    return list(map(lambda x: x.ljust(max_width, '.') + '#', level_map))
+    mapTxt = list(map(lambda x: 'X' + x.ljust(max_width, '.') + 'X', level_map))
+    for i in range(3):
+        clouds_line = ''
+        for _ in range(max_width + 1):
+            clouds_line += choice(('~', '.'))
+        mapTxt.insert(i, clouds_line)
+    mapTxt.insert(3, ''.ljust(max_width + 1, 'X'))
+    return mapTxt
 
 
 player = None
@@ -356,7 +363,10 @@ tile_images: dict[str, pygame.Surface] = {
     'grass': load_image('grass.png'),
     'grass2': load_image('grass2.png'),
     'tree': load_image('tree.png'),
-    'forest': load_image('forest_bg.png')
+    'forest': load_image('forest_bg.png'),
+    'cloud': load_image('cloud.png'),
+    'cloud2': load_image('cloud2.png'),
+    'cloud3': load_image('cloud3.png')
 }
 tile_width = tile_height = 64
 tiles_group = pygame.sprite.Group()
@@ -410,12 +420,18 @@ class Fireflies(pygame.sprite.Sprite):
 
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, tile_type: str, pos_x: int, pos_y: int):
+    def __init__(self, tile_type: Optional[str], pos_x: int, pos_y: int):
         super().__init__(tiles_group, all_sprites)
-        self.image = tile_images[tile_type]
+        if tile_type is None:
+            self.image = pygame.Surface((64, 64), pygame.SRCALPHA)
+            self.image.set_alpha(0)
+            self.mask = pygame.mask.from_surface(pygame.Surface((64, 64)))
+        else:
+            self.image = tile_images[tile_type]
+            self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
-        self.mask = pygame.mask.from_surface(self.image)
+
 
 
 class Player(pygame.sprite.Sprite):
@@ -459,10 +475,13 @@ def generate_level(level):
                 img = tile_images[tile_name]
 
                 Tile(tile_name, x + img.get_width() // tile_width, y - img.get_height() // tile_height + 1)
+            elif level[y][x] == 'X':
+                Tile(None, x, y)
             else:
                 symbol = level[y][x]
                 if symbol != '.':
                     Tile({
+                        '~': choice(('cloud', 'cloud2', 'cloud3')),
                         '_': choice(('grass', 'grass2')),
                         '#': 'wall',
                         '+': 'dirty3',
@@ -492,9 +511,12 @@ def game():
     running = True
 
     player, cx, cy = generate_level(load_level(f"{data['level']}.txt"))
+    bg = load_image('mountains.jpg')
 
     for sprite in all_sprites:
-        if sprite not in player_group and sprite.image not in (tile_images['tree'], tile_images['forest']):
+        if sprite not in player_group and sprite.image not in (tile_images['tree'], tile_images['forest'],
+                                                               tile_images['cloud'], tile_images['cloud2'],
+                                                               tile_images['cloud3']):
             collide_sprites.add(sprite)
 
     camera = Camera()
@@ -524,7 +546,7 @@ def game():
             player.rect.x = last_x
             player.rect.y = last_y
 
-        screen.fill(settings['screen_background'])
+        screen.blit(bg, (0, 0))
 
         camera.update(player)
         for sprite in all_sprites:
