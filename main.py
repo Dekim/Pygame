@@ -1,7 +1,7 @@
 import os
 import sys
 from typing import Optional
-from random import choice, randint
+from random import choice
 
 import pygame
 from PIL import ImageFilter, Image
@@ -142,8 +142,8 @@ def terminate():
 
 
 def blur_image(surf, radius):
-    pil_string_image = pygame.image.tostring(surf, "RGB",False)
-    pil_image = Image.frombuffer("RGB", surf.get_size(), pil_string_image)
+    pil_string_image = pygame.image.tostring(surf, "RGBA",False)
+    pil_image = Image.frombuffer("RGBA", surf.get_size(), pil_string_image)
     pil_blurred = pil_image.filter(ImageFilter.GaussianBlur(radius=radius))
     blurred_image = pygame.image.fromstring(pil_blurred.tobytes(), pil_blurred.size, pil_blurred.mode)
     return blurred_image.convert_alpha()
@@ -375,48 +375,44 @@ collide_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 
 
-class Firefly:
-    def __init__(self, x, y, surf):
-        self.x = x
-        self.y = y
+class Firefly(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(tiles_group, all_sprites)
+        self.x, self.y = tile_width * pos_x, tile_height * pos_y
         self.vx = -5
         self.vy = -5
-        self.surf = surf
+
+        self.taken = False
+        self.image = pygame.Surface((64, 64), pygame.SRCALPHA)
+
+        img_front, img_back = pygame.Surface((64, 64), pygame.SRCALPHA), pygame.Surface((64, 64), pygame.SRCALPHA)
+        pygame.draw.circle(img_front, (255, 255, 255, 255), (32, 32), 10)
+        pygame.draw.circle(img_back, (255, 255, 255, 255), (32, 32), 15)
+        img_back = blur_image(img_back, 10)
+
+        self.image.blit(img_back, (0, 0))
+        self.image.blit(img_front, (0, 0))
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect = self.image.get_rect().move(self.x, self.y)
+
 
     def move(self):
+        last_x, last_y = self.x, self.y
         self.x += self.vx
         self.y += self.vy
-        if self.y < 10 or self.y > tile_height - 10:
-            self.vy = -self.vy
-        if self.x < 10 or self.x > tile_width - 10:
-            self.vx = -self.vx
+        for sprite in collide_sprites:
+            if pygame.sprite.collide_rect(self, sprite) and sprite != self:
+                if self.rect.bottom - sprite.rect.bottom > 0:  # bottom side collided
+                    self.vy = -self.vy
+                elif sprite.rect.bottom - self.rect.top > 0:  # top side collided
+                    self.vy = -self.vy
+                if 0 < self.rect.right - sprite.rect.left < tile_width:  # left side collided
+                    self.vx = -self.vx
+                elif 8 > sprite.rect.right - self.rect.left:  # right side collided
+                    self.vx = -self.vx
+                self.x, self.y = last_x, last_y
+                break
 
-
-    def draw(self):
-        pygame.draw.circle(self.surf, (255, 255, 255, 255), (self.x, self.y), 5)
-
-
-
-class Fireflies(pygame.sprite.Sprite):
-    def __init__(self, pos_x: int, pos_y: int):
-        super().__init__(tiles_group, all_sprites)
-        self.image = pygame.Surface((64, 64), pygame.SRCALPHA)
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
-        self.mask = pygame.mask.from_surface(pygame.Surface((64, 64)))
-        self.taken = False
-
-        self.quantity = randint(1, 5)
-        positions = [(randint(10, tile_width - 10), randint(10, tile_height - 10)) for _ in range(self.quantity)]
-        self.fireflies = list()
-        for pos in positions:
-            self.fireflies.append(Firefly(*pos, self.image))
-
-    def update(self):
-        self.image.fill((0, 0, 0, 0))
-        for firefly in self.fireflies:
-            firefly.move()
-            firefly.draw()
 
 
 class Tile(pygame.sprite.Sprite):
@@ -447,11 +443,9 @@ class Player(pygame.sprite.Sprite):
     def check_collide(self):
         for sprite in collide_sprites:
             if pygame.sprite.collide_mask(self, sprite):
-                if isinstance(sprite, Fireflies):
+                if isinstance(sprite, Firefly):
                     sprite.taken = True
-                    sprite.image.fill((0, 0, 0, 0))
-                    data['fireflies'] += sprite.quantity
-                    sprite.quantity = 0
+                    data['fireflies'] += 1
                     collide_sprites.remove_internal(sprite)
                     return False
                 return True
@@ -465,18 +459,17 @@ def generate_level(level):
             if level[y][x] == '@':
                 new_player = Player(x, y)
                 pass
-            elif level[y][x] == '*':
-                Fireflies(x, y)
+            elif level[y][x] == 'X':
+                Tile(None, x, y)
             elif level[y][x] in '|&':
                 tile_name = {
                     '|': 'tree',
                     '&': 'forest'
                 }[level[y][x]]
                 img = tile_images[tile_name]
-
                 Tile(tile_name, x + img.get_width() // tile_width, y - img.get_height() // tile_height + 1)
-            elif level[y][x] == 'X':
-                Tile(None, x, y)
+            elif level[y][x] == '*':
+                Firefly(x, y)
             else:
                 symbol = level[y][x]
                 if symbol != '.':
@@ -499,8 +492,14 @@ class Camera:
         self.dy = 0
 
     def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
+        if isinstance(obj, Firefly):
+            obj.rect.x += self.dx
+            obj.rect.x += obj.vx
+            obj.rect.y += self.dy
+            obj.rect.y += obj.vy
+        else:
+            obj.rect.x += self.dx
+            obj.rect.y += self.dy
 
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
@@ -549,12 +548,21 @@ def game():
         screen.blit(bg, (0, 0))
 
         camera.update(player)
+        draw_queue = list()
         for sprite in all_sprites:
             camera.apply(sprite)
             if sprite not in player_group:
-                if isinstance(sprite, Fireflies) and not sprite.taken:
-                    sprite.update()
-                screen.blit(sprite.image, sprite.rect)
+                if isinstance(sprite, Firefly):
+                    if sprite.taken:
+                        continue
+                    else:
+                        sprite.move()
+                        draw_queue.append(sprite)
+                else:
+                    screen.blit(sprite.image, sprite.rect)
+
+        for sprite in draw_queue:
+            screen.blit(sprite.image, sprite.rect)
 
         screen.blit(player_img, player.rect)
         screen.blit(Label(f"Светлячков: {data['fireflies']}", 12).text, (10, 10))
