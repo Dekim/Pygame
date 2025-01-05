@@ -47,8 +47,8 @@ class Button:
         self.pos = pos
         self.screen = surface
         self.disabled = False
-        self.start = None
-        self.end = None
+        self.start: tuple[int, int]
+        self.end: tuple[int, int]
         self.style = {
             'font-size': 30,
             'border-width': 10,
@@ -192,8 +192,9 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     level_label = Label(f"Уровень {data['level']}", 12)
 
 
+    blurred_menu: pygame.Surface
     def draw_menu():
-        nonlocal menu
+        nonlocal menu, blurred_menu
         menu.fill(settings['screen_background'])
 
         menu.blit(fairy_img, (500, 125))
@@ -204,7 +205,7 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
         exit_btn.draw(exit_btn_pressed)
         score_table_btn.draw(score_btn_pressed)
 
-        screen.blit(blur_image(menu, 10) if score_frame_being_drawn else menu, (0, 0))
+        screen.blit(blurred_menu if score_frame_being_drawn else menu, (0, 0))
 
     score_frame_being_drawn = False
     close_score_frame_btn = None
@@ -257,6 +258,7 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
 
 
     draw_menu()
+    blurred_menu = blur_image(menu, 10)
     running = True
 
     while running:
@@ -282,7 +284,6 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
                 if event.type == pygame.MOUSEBUTTONUP:
                     if close_score_frame_pressed:
                         close_score_frame_pressed = False
-                        close_score_frame_btn = None
                         score_frame_being_drawn = False
 
                         draw_menu()
@@ -345,28 +346,21 @@ def load_level(filename):
 
     # дополняем каждую строку пустыми клетками ('.')
     mapTxt = list(map(lambda x: 'X' + x.ljust(max_width, '.') + 'X', level_map))
-    for i in range(3):
-        clouds_line = ''
-        for _ in range(max_width + 1):
-            clouds_line += choice(('~', '.'))
-        mapTxt.insert(i, clouds_line)
-    mapTxt.insert(3, ''.ljust(max_width + 1, 'X'))
+    mapTxt.insert(0, ''.ljust(max_width + 1, 'X'))
     return mapTxt
 
 
-player = None
 tile_images: dict[str, pygame.Surface] = {
-    'dirty': load_image('dirty.png'),
-    'dirty2': load_image('dirty2.png'),
-    'dirty3': load_image('dirty3.png'),
-    'wall': load_image('cobblestone.png'),
-    'grass': load_image('grass.png'),
-    'grass2': load_image('grass2.png'),
-    'tree': load_image('tree.png'),
-    'forest': load_image('forest_bg.png'),
-    'cloud': load_image('cloud.png'),
-    'cloud2': load_image('cloud2.png'),
-    'cloud3': load_image('cloud3.png')
+    'dirt': load_image('dirt.png', scale=(64, 64)),
+    'grass_dirt': load_image('grass_side_carried.png', scale=(64, 64)),
+    'wall': load_image('cobblestone.png', scale=(64, 64)),
+    'grass': load_image('tallgrass_carried.tga', scale=(64, 64)),
+    'grass2': load_image('double_plant_grass_carried.png', scale=(64, 64)),
+    'tree': load_image('log_oak.png', scale=(64, 64)),
+    'leaves': load_image('leaves_oak_carried.tga', scale=(64, 64)),
+    'sweet_berry_s1': load_image('sweet_berry_bush_stage1.png', scale=(64, 64)),
+    'sweet_berry_s2': load_image('sweet_berry_bush_stage2.png', scale=(64, 64)),
+    'flower': load_image('flower_cornflower.png', scale=(64, 64)),
 }
 tile_width = tile_height = 64
 tiles_group = pygame.sprite.Group()
@@ -418,6 +412,7 @@ class Firefly(pygame.sprite.Sprite):
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type: Optional[str], pos_x: int, pos_y: int):
         super().__init__(tiles_group, all_sprites)
+
         if tile_type is None:
             self.image = pygame.Surface((64, 64), pygame.SRCALPHA)
             self.image.set_alpha(0)
@@ -425,9 +420,8 @@ class Tile(pygame.sprite.Sprite):
         else:
             self.image = tile_images[tile_type]
             self.mask = pygame.mask.from_surface(self.image)
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
 
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
 
 class Player(pygame.sprite.Sprite):
@@ -461,25 +455,21 @@ def generate_level(level):
                 pass
             elif level[y][x] == 'X':
                 Tile(None, x, y)
-            elif level[y][x] in '|&':
-                tile_name = {
-                    '|': 'tree',
-                    '&': 'forest'
-                }[level[y][x]]
-                img = tile_images[tile_name]
-                Tile(tile_name, x + img.get_width() // tile_width, y - img.get_height() // tile_height + 1)
             elif level[y][x] == '*':
                 Firefly(x, y)
             else:
                 symbol = level[y][x]
                 if symbol != '.':
                     Tile({
-                        '~': choice(('cloud', 'cloud2', 'cloud3')),
                         '_': choice(('grass', 'grass2')),
                         '#': 'wall',
-                        '+': 'dirty3',
-                        '=': 'dirty2',
-                        '-': 'dirty'
+                        '+': 'grass_dirt',
+                        '-': 'dirt',
+                        '|': 'tree',
+                        '/': 'leaves',
+                        '=': 'sweet_berry_s1',
+                        '!': 'sweet_berry_s2',
+                        '1': 'flower'
                     }[symbol], x, y)
 
     # вернем игрока, а также размер поля в клетках
@@ -506,6 +496,19 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
 
 
+player: Player
+
+blocklist = (
+    tile_images['tree'],
+    tile_images['grass'],
+    tile_images['grass2'],
+    tile_images['leaves'],
+    tile_images['sweet_berry_s1'],
+    tile_images['sweet_berry_s2'],
+    tile_images['flower']
+)
+
+
 def game():
     running = True
 
@@ -513,9 +516,7 @@ def game():
     bg = load_image('mountains.jpg')
 
     for sprite in all_sprites:
-        if sprite not in player_group and sprite.image not in (tile_images['tree'], tile_images['forest'],
-                                                               tile_images['cloud'], tile_images['cloud2'],
-                                                               tile_images['cloud3']):
+        if sprite not in player_group and sprite.image not in blocklist:
             collide_sprites.add(sprite)
 
     camera = Camera()
