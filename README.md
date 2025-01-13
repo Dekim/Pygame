@@ -10,12 +10,16 @@
 Игрок - фея которая собирает светлячков. В уровне есть деревья, земля и небо
 
 <figure>
-  <figcaption>Главное меню</figcaption>
+  <figcaption>
+    Главное меню
+  </figcaption>
   <img src="./resource/screenshots/5199648968483663400.jpg" width="512"/>
 </figure>
 
 <figure>
-  <figcaption>Уровень</figcaption>
+  <figcaption>
+    Уровень
+  </figcaption>
   <img src="./resource/screenshots/5199648968483663399.jpg" width="512"/>
 </figure>
 
