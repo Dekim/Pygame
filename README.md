@@ -9,21 +9,18 @@
 После нажатия кнопки "Выход" игра закрывается
 Игрок - фея которая собирает светлячков. В уровне есть деревья, земля и небо
 
-\
 
 <figure>
   <img src="./resource/screenshots/5199648968483663400.jpg" width="512"/>
   <figcaption>Главное меню</figcaption>
 </figure>
 
-\
 
 <figure>
   <img src="./resource/screenshots/5199648968483663399.jpg" width="512"/>
   <figcaption>Уровень</figcaption>
 </figure>
 
-\
 
 ### **1. Общее описание**
 
