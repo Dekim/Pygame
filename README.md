@@ -28,9 +28,8 @@
 **Руководство администратора**
 1. Установите Python 3.x.
 2. Установите библиотеки Pygame и Pillow с помощью команды:
-```
-pip install pygame
-pip install Pillow
+```bash
+pip install pygame Pillow
 ```
 3. Убедиться, что файл scores.csv находится в папке проекта для сохранения результатов.
 
