@@ -11,14 +11,14 @@
 
 <figure>
   <figcaption>
-    Главное меню
+    Главное меню \
   </figcaption>
   <img src="./resource/screenshots/5199648968483663400.jpg" width="512"/>
 </figure>
 
 <figure>
   <figcaption>
-    Уровень
+    Уровень \
   </figcaption>
   <img src="./resource/screenshots/5199648968483663399.jpg" width="512"/>
 </figure>
