@@ -9,8 +9,8 @@
 После нажатия кнопки "Выход" игра закрывается
 Игрок - фея которая собирает светлячков. В уровне есть деревья, земля и небо
 \
-![Главное меню](https://raw.githubusercontent.com/Dekim/Pygame/refs/heads/main/resource/screenshots/5199648968483663400.jpg)
-![Игра](https://raw.githubusercontent.com/Dekim/Pygame/refs/heads/main/resource/screenshots/5199648968483663399.jpg)
+<img src="./resource/screenshots/5199648968483663400.jpg" width="400"/>
+<img src="./resource/screenshots/5199648968483663399.jpg" width="400"/>
 
 ### **1. Общее описание**
 
