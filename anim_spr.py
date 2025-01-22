@@ -24,8 +24,6 @@ def load_image(name, color_key=None):
         if color_key == -1:
             color_key = image.get_at((0, 0))
         image.set_colorkey(color_key)
-    else:
-        image = image.convert_alpha()
     return image
 
 
@@ -51,7 +49,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
 
 
-dragon = AnimatedSprite(load_image("image\snake.png"), 7, 1, 50, 50)
+dragon = AnimatedSprite(load_image("image/snake.png"), 7, 1, 50, 50)
 
 running = True
 
