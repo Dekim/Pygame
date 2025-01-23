@@ -1,5 +1,6 @@
 import os
 import sys
+import csv
 from typing import Optional
 from random import choice
 import pygame
@@ -12,6 +13,7 @@ settings = {
 
 data = {
     'level': 1,
+    'tmp': 0,
     'fireflies': 0,
     'min_time': 5 * 60
 }
@@ -135,6 +137,11 @@ class Button:
 
 
 def terminate():
+    with open('scores.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=';')
+        writer.writerow(['level', 'fireflies', 'min_time'])
+        writer.writerow([data['level'], data['fireflies'], data['min_time']])
+
     pygame.quit()
     sys.exit(0)
 
@@ -308,7 +315,8 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
 
         pygame.display.flip()
         clock.tick(settings['fps'])
-
+    else:
+        game(cursor)
 
 def load_image(name, colorkey=None, scale:Optional[tuple[int, int]]=None, flip:Optional[tuple[bool, bool]]=None) -> pygame.Surface:
     fullname = os.path.join('resource/image', name)
@@ -488,7 +496,7 @@ class Player(pygame.sprite.Sprite):
             if pygame.sprite.collide_mask(self, sprite):
                 if isinstance(sprite, Firefly):
                     sprite.taken = True
-                    data['fireflies'] += 1
+                    data['tmp'] += 1
                     self.health.add(10)
                     collide_sprites.remove_internal(sprite)
                     return False
@@ -503,13 +511,13 @@ class Health:
 
     def _speed_control(func):
         def controller(self, *args):
-            if self.health < 10:
+            if self.health <= 10:
                 self.player.speed = 1
-            elif self.health < 40:
+            elif self.health <= 40:
                 self.player.speed = 2
-            elif self.health < 70:
+            elif self.health <= 70:
                 self.player.speed = 3
-            elif self.health < 90:
+            elif self.health <= 90:
                 self.player.speed = 4
             elif self.health > 90:
                 self.player.speed = 5
@@ -602,6 +610,8 @@ blacklist = (
 
 
 def game(cursor):
+    global fireflies_count, tiles_group, all_sprites, collide_sprites, player_group, snakes_group
+
     # Таймер для анимации змеи
     fps_time_delay = 100
     snake_anim_timer_event = pygame.USEREVENT + 1
@@ -615,36 +625,56 @@ def game(cursor):
 
     blured = None
     game_ended = False
+    game_over = False
+    end_text = tuple()
+
+    frame = pygame.Surface((600, 400), pygame.SRCALPHA)
+    frame.fill((0, 0, 0, 155))
+
+    home_btn = Button("Домой", (100, 300), frame)
+    home_btn.style['font-size'] = 15
+    home_btn.style['border-width'] = 8
+    home_btn.style['states']['normal']['color'] = (255, 255, 255)
+    home_btn.style['states']['normal']['background'] = (9, 117, 96)
+    home_btn.style['states']['normal']['border-color'] = (9, 117, 96)
+    home_btn.style['states']['pressed']['color'] = (255, 255, 255)
+    home_btn.style['states']['pressed']['background'] = (8, 106, 87)
+    home_btn.style['states']['pressed']['border-color'] = (8, 106, 87)
+    home_btn_pressed = False
+
+    exit_btn = Button("Выход", (400, 300), frame)
+    exit_btn.style['font-size'] = 15
+    exit_btn.style['border-width'] = 8
+    exit_btn.style['states']['normal']['color'] = (255, 255, 255)
+    exit_btn.style['states']['normal']['background'] = (51, 115, 165)
+    exit_btn.style['states']['normal']['border-color'] = (51, 115, 165)
+    exit_btn.style['states']['pressed']['color'] = (255, 255, 255)
+    exit_btn.style['states']['pressed']['background'] = (41, 92, 132)
+    exit_btn.style['states']['pressed']['border-color'] = (41, 92, 132)
+    exit_btn_pressed = False
+
     def end_menu_draw():
         nonlocal blured
         if blured is None:
             blured = blur_image(screen, 10)
         screen.blit(blured, (0, 0))
 
-        frame = pygame.Surface((600, 400), pygame.SRCALPHA)
-        frame.fill((0, 0, 0, 155))
+        label = Label("Вы проиграли" if game_over else "Вы победили", 15)
+        frame.blit(label.text, (300 - label.get_size()[0] // 2, 25))
 
-        close_score_frame_btn = Button("X", (550, 25), frame)
-        close_score_frame_btn.style['font-size'] = 15
-        close_score_frame_btn.style['states']['normal']['background'] = "transparent"
-        close_score_frame_btn.style['states']['pressed']['background'] = "transparent"
-        close_score_frame_btn.style['states']['normal']['border-color'] = "transparent"
-        close_score_frame_btn.style['states']['pressed']['border-color'] = "transparent"
-        close_score_frame_btn.style['states']['pressed']['color'] = (255, 41, 73)
-        close_score_frame_btn.draw()
+        line_i = 0
+        for i in range(100, 300, 25):
+            if line_i < len(end_text):
+                label = Label(end_text[line_i], 15)
+                frame.blit(label.text, (100, i))
+                line_i += 1
+            else:
+                break
 
-        label = Label("Таблица рекордов", 15)
-        frame.blit(label.text, (150, 25))
+        home_btn.draw(home_btn_pressed)
+        exit_btn.draw(exit_btn_pressed)
 
         screen.blit(frame, (100, 100))
-
-
-    def end():
-        nonlocal game_ended, cursor
-        game_ended = True
-        # end_menu_draw()
-        # cursor = Cursor(screen)
-        # cursor.draw(20, 20)
 
     running = True
 
@@ -658,14 +688,52 @@ def game(cursor):
     camera = Camera()
 
     player_img = player.image
+    last_cursor_pos = (20, 20)
     while running:
         if game_ended:
+            end_menu_draw()
+            cursor.draw(*last_cursor_pos)
             for event in pygame.event.get():
-                if event == pygame.MOUSEMOTION:
-                    print(*event.pos)
+                if event.type == pygame.QUIT:
+                    terminate()
+                if event.type == pygame.MOUSEMOTION:
+                    last_cursor_pos = event.pos
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    x, y = event.pos
+                    x -= 100
+                    y -= 100
+                    home_btn_pressed = home_btn.clicked(x, y)
+                    exit_btn_pressed = exit_btn.clicked(x, y)
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if exit_btn_pressed:
+                        terminate()
+                    if home_btn_pressed:
+                        running = False
         else:
             if player.health.health == 0:
-                end()
+                game_ended = True
+                game_over = True
+                end_text = ("Вас укусила змея",)
+            elif game_time == 0:
+                game_ended = True
+                game_over = True
+                end_text = (f"Вы не успели собрать {fireflies_count}", "светлячков за 5 минут")
+            elif data['tmp'] == fireflies_count:
+                game_ended = True
+                game_time = abs(game_time - 5 * 60)
+                minutes = game_time // 60
+                seconds = game_time - (minutes * 60)
+                tmp_text = [f"Вы собрали {fireflies_count} светлячков", "за {:02}:{:02}".format(minutes, seconds)]
+
+                if data['level'] < 2:
+                    data['level'] += 1
+                if data['min_time'] > game_time:
+                    tmp_text.insert(0, "НОВЫЙ РЕКОРД!!!")
+                    data['fireflies'] = data['tmp']
+                    data['min_time'] = game_time
+
+                end_text = tuple(tmp_text)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -717,7 +785,7 @@ def game(cursor):
 
             screen.blit(player_img, player.rect)
             screen.blit(Label(f"Здоровье +{player.health.health}", 12).text, (10, 10))
-            screen.blit(Label(f"Светлячков: {data['fireflies']}::{fireflies_count}", 12).text, (10, 32))
+            screen.blit(Label(f"Светлячков: {data['tmp']}::{fireflies_count}", 12).text, (10, 32))
 
             minutes = game_time // 60
             seconds = game_time - (minutes * 60)
@@ -725,9 +793,29 @@ def game(cursor):
 
         pygame.display.flip()
         clock.tick(settings['fps'])
+    else:
+        fireflies_count = 0
+        tiles_group = pygame.sprite.Group()
+        all_sprites = pygame.sprite.Group()
+        collide_sprites = pygame.sprite.Group()
+        player_group = pygame.sprite.Group()
+        snakes_group = pygame.sprite.Group()
+        data['tmp'] = 0
+        start_menu(screen, clock, cursor)
 
 
 if __name__ == '__main__':
+    if os.path.exists('scores.csv'):
+        with open('scores.csv', newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=';')
+            for row in reader:
+                if row[0] == 'level':  # skip header
+                    continue
+
+                data['level'] = int(row[0])
+                data['fireflies'] = int(row[1])
+                data['min_time'] = int(row[2])
+
     pygame.init()
     pygame.display.set_caption('Светлячки')
     size = width, height = 800, 600
@@ -740,6 +828,5 @@ if __name__ == '__main__':
     cursor = Cursor(screen)
 
     start_menu(screen, clock, cursor)
-    game(cursor)
 
     pygame.quit()
