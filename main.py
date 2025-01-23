@@ -155,8 +155,7 @@ def blur_image(surf, radius):
 
 
 def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor):
-    menu = pygame.Surface((800, 600))
-    menu.fill(settings['screen_background'])
+    screen.fill(settings['screen_background'])
 
     fairy_img = pygame.image.load('resource/image/player.png')
     fairy_img = pygame.transform.scale(fairy_img, (250, 400))
@@ -165,7 +164,7 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     exit_btn_pressed = False
     score_btn_pressed = False
 
-    play_btn = Button("Играть", (180, 200), menu)
+    play_btn = Button("Играть", (180, 200), screen)
     play_btn.style['font-size'] = 25
     play_btn.style['border-width'] = 15
     play_btn.style['states']['normal']['color'] = (255, 255, 255)
@@ -175,7 +174,7 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     play_btn.style['states']['pressed']['background'] = (8, 106, 87)
     play_btn.style['states']['pressed']['border-color'] = (8, 106, 87)
 
-    exit_btn = Button("Выход", (202, 350), menu)
+    exit_btn = Button("Выход", (202, 350), screen)
     exit_btn.style['font-size'] = 15
     exit_btn.style['border-width'] = 8
     exit_btn.style['states']['normal']['color'] = (255, 255, 255)
@@ -185,7 +184,7 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     exit_btn.style['states']['pressed']['background'] = (41, 92, 132)
     exit_btn.style['states']['pressed']['border-color'] = (41, 92, 132)
 
-    score_table_btn = Button("Таблица рекордов", (555, 50), menu)
+    score_table_btn = Button("Таблица рекордов", (555, 50), screen)
     score_table_btn.style['font-size'] = 12
     score_table_btn.style['states']['normal']['color'] = (255, 255, 255)
     score_table_btn.style['states']['normal']['background'] = settings['screen_background']
@@ -195,22 +194,6 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     score_table_btn.style['states']['pressed']['border-color'] = settings['screen_background']
 
     level_label = Label(f"Уровень {data['level']}", 12)
-
-
-    blurred_menu: pygame.Surface
-    def draw_menu():
-        nonlocal menu, blurred_menu
-        menu.fill(settings['screen_background'])
-
-        menu.blit(fairy_img, (500, 125))
-        menu.blit(level_label.text, (25, 25))
-
-        # Отрисовка элементов
-        play_btn.draw(play_btn_pressed)
-        exit_btn.draw(exit_btn_pressed)
-        score_table_btn.draw(score_btn_pressed)
-
-        screen.blit(blurred_menu if score_frame_being_drawn else menu, (0, 0))
 
     score_frame_being_drawn = False
     close_score_frame_btn = None
@@ -253,37 +236,40 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
 
         screen.blit(frame, (100, 100))
 
-
-    draw_menu()
-    blurred_menu = blur_image(menu, 10)
     running = True
+    last_cur_pos = (20, 20)
 
+    blured = None
     while running:
+        if score_frame_being_drawn:
+            screen.blit(blured, (0, 0))
+            draw_score()
+        else:
+            screen.fill(settings['screen_background'])
+            play_btn.draw(play_btn_pressed)
+            exit_btn.draw(exit_btn_pressed)
+            score_table_btn.draw(score_btn_pressed)
+            screen.blit(level_label.text, (10, 10))
+            screen.blit(fairy_img, (500, 100))
+            if blured is None:
+                blured = blur_image(screen, 10)
+        cursor.draw(*last_cur_pos)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEMOTION:
-                draw_menu()
-
-                if score_frame_being_drawn:
-                    draw_score()
-
-                cursor.draw(*event.pos)
+                last_cur_pos = event.pos
 
             if score_frame_being_drawn:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     x, y = event.pos
                     close_score_frame_pressed = close_score_frame_btn.clicked(x - 100, y - 100)
-
-                    draw_menu()
-                    draw_score()
                     cursor.draw(*event.pos)
                 if event.type == pygame.MOUSEBUTTONUP:
                     if close_score_frame_pressed:
                         close_score_frame_pressed = False
                         score_frame_being_drawn = False
-
-                        draw_menu()
                         cursor.draw(*event.pos)
             else:
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -291,7 +277,6 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
                     exit_btn_pressed = exit_btn.clicked(*event.pos)
                     score_btn_pressed = score_table_btn.clicked(*event.pos)
 
-                    draw_menu()
                     cursor.draw(*event.pos)
 
                 if event.type == pygame.MOUSEBUTTONUP:
@@ -306,7 +291,6 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
                         score_frame_being_drawn = True
                         score_table_btn.draw()
 
-                        draw_menu()
                         draw_score()
                         cursor.draw(*event.pos)
 
