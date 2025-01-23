@@ -168,21 +168,21 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     play_btn.style['font-size'] = 25
     play_btn.style['border-width'] = 15
     play_btn.style['states']['normal']['color'] = (255, 255, 255)
-    play_btn.style['states']['normal']['background'] = (9, 117, 96)
-    play_btn.style['states']['normal']['border-color'] = (9, 117, 96)
+    play_btn.style['states']['normal']['background'] = (30, 117, 100)
+    play_btn.style['states']['normal']['border-color'] = (30, 117, 100)
     play_btn.style['states']['pressed']['color'] = (255, 255, 255)
-    play_btn.style['states']['pressed']['background'] = (8, 106, 87)
-    play_btn.style['states']['pressed']['border-color'] = (8, 106, 87)
+    play_btn.style['states']['pressed']['background'] = (25, 97, 83)
+    play_btn.style['states']['pressed']['border-color'] = (25, 97, 83)
 
     exit_btn = Button("Выход", (202, 350), screen)
     exit_btn.style['font-size'] = 15
     exit_btn.style['border-width'] = 8
     exit_btn.style['states']['normal']['color'] = (255, 255, 255)
-    exit_btn.style['states']['normal']['background'] = (51, 115, 165)
-    exit_btn.style['states']['normal']['border-color'] = (51, 115, 165)
+    exit_btn.style['states']['normal']['background'] = (151, 151, 226)
+    exit_btn.style['states']['normal']['border-color'] = (151, 151, 226)
     exit_btn.style['states']['pressed']['color'] = (255, 255, 255)
-    exit_btn.style['states']['pressed']['background'] = (41, 92, 132)
-    exit_btn.style['states']['pressed']['border-color'] = (41, 92, 132)
+    exit_btn.style['states']['pressed']['background'] = (139, 139, 208)
+    exit_btn.style['states']['pressed']['border-color'] = (139, 139, 208)
 
     score_table_btn = Button("Таблица рекордов", (555, 50), screen)
     score_table_btn.style['font-size'] = 12
@@ -501,9 +501,9 @@ class Health:
                 self.player.speed = 2
             elif self.health <= 70:
                 self.player.speed = 3
-            elif self.health <= 90:
+            elif self.health < 90:
                 self.player.speed = 4
-            elif self.health > 90:
+            elif self.health >= 90:
                 self.player.speed = 5
             func(self, *args)
         return controller
@@ -619,22 +619,24 @@ def game(cursor):
     home_btn.style['font-size'] = 15
     home_btn.style['border-width'] = 8
     home_btn.style['states']['normal']['color'] = (255, 255, 255)
-    home_btn.style['states']['normal']['background'] = (9, 117, 96)
-    home_btn.style['states']['normal']['border-color'] = (9, 117, 96)
+    home_btn.style['states']['normal']['background'] = (30, 117, 100)
+    home_btn.style['states']['normal']['border-color'] = (30, 117, 100)
     home_btn.style['states']['pressed']['color'] = (255, 255, 255)
-    home_btn.style['states']['pressed']['background'] = (8, 106, 87)
-    home_btn.style['states']['pressed']['border-color'] = (8, 106, 87)
+    home_btn.style['states']['pressed']['background'] = (25, 97, 83)
+    home_btn.style['states']['pressed']['border-color'] = (25, 97, 83)
+
+
     home_btn_pressed = False
 
     exit_btn = Button("Выход", (400, 300), frame)
     exit_btn.style['font-size'] = 15
     exit_btn.style['border-width'] = 8
     exit_btn.style['states']['normal']['color'] = (255, 255, 255)
-    exit_btn.style['states']['normal']['background'] = (51, 115, 165)
-    exit_btn.style['states']['normal']['border-color'] = (51, 115, 165)
+    exit_btn.style['states']['normal']['background'] = (151, 151, 226)
+    exit_btn.style['states']['normal']['border-color'] = (151, 151, 226)
     exit_btn.style['states']['pressed']['color'] = (255, 255, 255)
-    exit_btn.style['states']['pressed']['background'] = (41, 92, 132)
-    exit_btn.style['states']['pressed']['border-color'] = (41, 92, 132)
+    exit_btn.style['states']['pressed']['background'] = (139, 139, 208)
+    exit_btn.style['states']['pressed']['border-color'] = (139, 139, 208)
     exit_btn_pressed = False
 
     def end_menu_draw():
