@@ -15,21 +15,21 @@
   <figcaption>
     Главное меню
   </figcaption>
-  <img src="./resource/screenshots/5199648968483663400.jpg" width="512"/>
+  <img src="./resource/screenshots/1.png" width="512"/>
 </figure>
 
 <figure>
   <figcaption>
     Уровень
   </figcaption>
-  <img src="./resource/screenshots/5199648968483663399.jpg" width="512"/>
+  <img src="./resource/screenshots/2.png" width="512"/>
 </figure>
 
 **Руководство администратора**
 1. Установите Python 3.x.
 2. Установите библиотеки Pygame и Pillow с помощью команды
 ```
-pip install pygame Pillow
+pip install -r requirements.txt
 ```
 \
 _Структура проекта:_ \
