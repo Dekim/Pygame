@@ -168,11 +168,11 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     play_btn.style['font-size'] = 25
     play_btn.style['border-width'] = 15
     play_btn.style['states']['normal']['color'] = (255, 255, 255)
-    play_btn.style['states']['normal']['background'] = (30, 117, 100)
-    play_btn.style['states']['normal']['border-color'] = (30, 117, 100)
+    play_btn.style['states']['normal']['background'] = (0, 170, 159)
+    play_btn.style['states']['normal']['border-color'] = (0, 170, 159)
     play_btn.style['states']['pressed']['color'] = (255, 255, 255)
-    play_btn.style['states']['pressed']['background'] = (25, 97, 83)
-    play_btn.style['states']['pressed']['border-color'] = (25, 97, 83)
+    play_btn.style['states']['pressed']['background'] = (0, 145, 135)
+    play_btn.style['states']['pressed']['border-color'] = (0, 145, 135)
 
     exit_btn = Button("Выход", (202, 350), screen)
     exit_btn.style['font-size'] = 15
@@ -187,11 +187,11 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     score_table_btn = Button("Таблица рекордов", (555, 50), screen)
     score_table_btn.style['font-size'] = 12
     score_table_btn.style['states']['normal']['color'] = (255, 255, 255)
-    score_table_btn.style['states']['normal']['background'] = settings['screen_background']
-    score_table_btn.style['states']['normal']['border-color'] = settings['screen_background']
+    score_table_btn.style['states']['normal']['background'] = "transparent"
+    score_table_btn.style['states']['normal']['border-color'] = "transparent"
     score_table_btn.style['states']['pressed']['color'] = (230, 230, 230)
-    score_table_btn.style['states']['pressed']['background'] = settings['screen_background']
-    score_table_btn.style['states']['pressed']['border-color'] = settings['screen_background']
+    score_table_btn.style['states']['pressed']['background'] = "transparent"
+    score_table_btn.style['states']['pressed']['border-color'] = "transparent"
 
     level_label = Label(f"Уровень {data['level']}", 12)
 
@@ -619,11 +619,11 @@ def game(cursor):
     home_btn.style['font-size'] = 15
     home_btn.style['border-width'] = 8
     home_btn.style['states']['normal']['color'] = (255, 255, 255)
-    home_btn.style['states']['normal']['background'] = (30, 117, 100)
-    home_btn.style['states']['normal']['border-color'] = (30, 117, 100)
+    home_btn.style['states']['normal']['background'] = (0, 170, 159)
+    home_btn.style['states']['normal']['border-color'] = (0, 170, 159)
     home_btn.style['states']['pressed']['color'] = (255, 255, 255)
-    home_btn.style['states']['pressed']['background'] = (25, 97, 83)
-    home_btn.style['states']['pressed']['border-color'] = (25, 97, 83)
+    home_btn.style['states']['pressed']['background'] = (0, 145, 135)
+    home_btn.style['states']['pressed']['border-color'] = (0, 145, 135)
 
 
     home_btn_pressed = False
@@ -699,7 +699,7 @@ def game(cursor):
             if player.health.health == 0:
                 game_ended = True
                 game_over = True
-                end_text = ("Вас укусила змея",)
+                end_text = ("Вас докусала змея",)
             elif game_time == 0:
                 game_ended = True
                 game_over = True
@@ -713,6 +713,8 @@ def game(cursor):
 
                 if data['level'] < 2:
                     data['level'] += 1
+                    tmp_text.extend(["", f"Повышение! Ваш уровень {data['level']}"])
+
                 if data['min_time'] > game_time:
                     tmp_text.insert(0, "НОВЫЙ РЕКОРД!!!")
                     data['fireflies'] = data['tmp']
