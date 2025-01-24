@@ -160,6 +160,11 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
     fairy_img = pygame.image.load('resource/image/player.png')
     fairy_img = pygame.transform.scale(fairy_img, (250, 400))
 
+    lamp_img = load_image('lamp.png', scale=(48, 48))
+    lamp_light = pygame.surface.Surface((64, 64), pygame.SRCALPHA)
+    pygame.draw.circle(lamp_light, (89, 249, 255), (32, 32), 16)
+    lamp_light = blur_image(lamp_light, 10)
+
     play_btn_pressed = False
     exit_btn_pressed = False
     score_btn_pressed = False
@@ -249,8 +254,11 @@ def start_menu(screen: pygame.Surface, clock: pygame.time.Clock, cursor: Cursor)
             play_btn.draw(play_btn_pressed)
             exit_btn.draw(exit_btn_pressed)
             score_table_btn.draw(score_btn_pressed)
+            screen.blit(lamp_light, (113, -5))
+            screen.blit(lamp_img, (120, -3))
             screen.blit(level_label.text, (10, 10))
             screen.blit(fairy_img, (500, 100))
+
             if blured is None:
                 blured = blur_image(screen, 10)
         cursor.draw(*last_cur_pos)
